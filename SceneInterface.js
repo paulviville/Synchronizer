@@ -11,6 +11,12 @@ export default class SceneInterface {
     #objectsMap = new Map();
     #boxMap = new Map();
 
+	#cameraNeedsUpdate = false;
+	#pointer = {
+		p0: new THREE.Vector3(),
+		p1: new THREE.Vector3()
+	};
+	#pointerNeedsUpdate = false; 
 
     constructor ( ) {
 		console.log("SceneInterface - constructor");
@@ -26,7 +32,14 @@ export default class SceneInterface {
         
         document.body.appendChild( this.#renderer.domElement );
         this.#orbitControls = new OrbitControls( this.#camera, this.#renderer.domElement);
-    
+		console.log(this.#orbitControls)
+		this.#orbitControls.addEventListener(`change`, (event) => {
+			this.#cameraNeedsUpdate = true;
+		});
+
+		this.#renderer.domElement.addEventListener("mousedown", ( event ) => {
+			this.#onMouseDown(event);
+		})
     }
 
     async loadFile ( filePath ) {
@@ -117,4 +130,38 @@ export default class SceneInterface {
     get controls ( ) {
         return this.#orbitControls;
     }
+
+	get cameraNeedsUpdate ( ) {
+		const needsUpdate = this.#cameraNeedsUpdate;
+		this.#cameraNeedsUpdate = false;
+		return needsUpdate;
+	}
+
+	get pointerNeedsUpdate ( ) {
+		const needsUpdate = this.#pointerNeedsUpdate;
+		this.#pointerNeedsUpdate = false;
+		return needsUpdate;
+	}
+
+	get pointer ( ) {
+		return {p0: this.#pointer.p0.clone(), p1: this.#pointer.p1.clone()};
+	}
+
+	#onMouseDown ( event ) {
+		// console.log(event);
+		const mouse = new THREE.Vector2(
+			(event.clientX / window.innerWidth) * 2 - 1,
+			- (event.clientY / window.innerHeight) * 2 + 1
+		);
+
+		if( event.button == 1 ) {
+			const raycaster = new THREE.Raycaster();
+			raycaster.setFromCamera(mouse, this.#camera);
+			console.log("mouse wheel down");
+			console.log(raycaster);
+			this.#pointer.p0.copy(raycaster.ray.origin).addScaledVector(raycaster.ray.direction, 1.5)
+			this.#pointer.p1.copy(raycaster.ray.origin).addScaledVector(raycaster.ray.direction, 4);
+			this.#pointerNeedsUpdate = true;
+		}
+	}
 }
