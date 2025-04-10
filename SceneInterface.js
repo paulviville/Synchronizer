@@ -17,7 +17,14 @@ export default class SceneInterface {
 		p1: new THREE.Vector3()
 	};
 	#pointerNeedsUpdate = false; 
+	#pointerActive = false; 
 
+    #onMouseDownBound;
+    #onMouseMoveBound;
+    #onMouseUpBound;
+    #mouse = new THREE.Vector2();
+	#raycaster = new THREE.Raycaster();
+    
     constructor ( ) {
 		console.log("SceneInterface - constructor");
 
@@ -33,13 +40,17 @@ export default class SceneInterface {
         document.body.appendChild( this.#renderer.domElement );
         this.#orbitControls = new OrbitControls( this.#camera, this.#renderer.domElement);
 		console.log(this.#orbitControls)
-		this.#orbitControls.addEventListener(`change`, (event) => {
+		this.#orbitControls.addEventListener(`change`, ( event ) => {
 			this.#cameraNeedsUpdate = true;
 		});
+        this.#orbitControls.mouseButtons.MIDDLE = null;
 
-		this.#renderer.domElement.addEventListener("mousedown", ( event ) => {
-			this.#onMouseDown(event);
-		})
+        this.#onMouseDownBound = this.#onMouseDown.bind(this);
+        this.#onMouseMoveBound = this.#onMouseMove.bind(this);
+        this.#onMouseUpBound = this.#onMouseUp.bind(this);
+
+		this.#renderer.domElement.addEventListener("mousedown", this.#onMouseDownBound);
+		this.#renderer.domElement.addEventListener("mousemove", this.#onMouseMoveBound);
     }
 
     async loadFile ( filePath ) {
@@ -144,24 +155,43 @@ export default class SceneInterface {
 	}
 
 	get pointer ( ) {
+        this.#raycaster.setFromCamera(this.#mouse, this.#camera);
+        this.#pointer.p0.copy(this.#raycaster.ray.origin).addScaledVector(this.#raycaster.ray.direction, 1.5)
+        this.#pointer.p1.copy(this.#raycaster.ray.origin).addScaledVector(this.#raycaster.ray.direction, 4);
+    
 		return {p0: this.#pointer.p0.clone(), p1: this.#pointer.p1.clone()};
 	}
 
+    #setMouse ( x, y ) {
+        this.#mouse.set(
+			(x / window.innerWidth) * 2 - 1,
+			- (y / window.innerHeight) * 2 + 1
+		);
+    } 
+
 	#onMouseDown ( event ) {
 		// console.log(event);
-		const mouse = new THREE.Vector2(
-			(event.clientX / window.innerWidth) * 2 - 1,
-			- (event.clientY / window.innerHeight) * 2 + 1
-		);
+        this.#setMouse(event.clientX, event.clientY);
 
 		if( event.button == 1 ) {
-			const raycaster = new THREE.Raycaster();
-			raycaster.setFromCamera(mouse, this.#camera);
-			console.log("mouse wheel down");
-			console.log(raycaster);
-			this.#pointer.p0.copy(raycaster.ray.origin).addScaledVector(raycaster.ray.direction, 1.5)
-			this.#pointer.p1.copy(raycaster.ray.origin).addScaledVector(raycaster.ray.direction, 4);
-			this.#pointerNeedsUpdate = true;
+        	this.#pointerNeedsUpdate = true;
+        	this.#pointerActive = true;
+            this.#renderer.domElement.addEventListener("mouseup", this.#onMouseUpBound);
 		}
+
 	}
+
+    #onMouseMove ( event ) {
+        this.#setMouse(event.clientX, event.clientY);
+        this.#pointerNeedsUpdate = this.#pointerActive;
+    }
+
+    #onMouseUp ( event ) {
+        this.#pointerActive = false;
+        this.#renderer.domElement.removeEventListener("mouseup", this.#onMouseUpBound);
+    }
+
+    // #onKeyDown ( event ) {
+        /// Place markers when pressing key
+    // }
 }
