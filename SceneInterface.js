@@ -23,6 +23,7 @@ export default class SceneInterface {
     #onMouseMoveBound;
     #onMouseUpBound;
     #mouse = new THREE.Vector2();
+	#lastPointerMouse = new THREE.Vector2();
 	#raycaster = new THREE.Raycaster();
     
     constructor ( ) {
@@ -155,7 +156,7 @@ export default class SceneInterface {
 	}
 
 	get pointer ( ) {
-        this.#raycaster.setFromCamera(this.#mouse, this.#camera);
+        this.#raycaster.setFromCamera(this.#lastPointerMouse, this.#camera);
         this.#pointer.p0.copy(this.#raycaster.ray.origin).addScaledVector(this.#raycaster.ray.direction, 1.5)
         this.#pointer.p1.copy(this.#raycaster.ray.origin).addScaledVector(this.#raycaster.ray.direction, 4);
     
@@ -176,6 +177,7 @@ export default class SceneInterface {
 		if( event.button == 1 ) {
         	this.#pointerNeedsUpdate = true;
         	this.#pointerActive = true;
+			this.#lastPointerMouse.copy(this.#mouse);
             this.#renderer.domElement.addEventListener("mouseup", this.#onMouseUpBound);
 		}
 
@@ -184,10 +186,14 @@ export default class SceneInterface {
     #onMouseMove ( event ) {
         this.#setMouse(event.clientX, event.clientY);
         this.#pointerNeedsUpdate = this.#pointerActive;
+		if( this.#pointerActive )
+			this.#lastPointerMouse.copy(this.#mouse);
+
     }
 
     #onMouseUp ( event ) {
         this.#pointerActive = false;
+		this.#lastPointerMouse.copy(this.#mouse);
         this.#renderer.domElement.removeEventListener("mouseup", this.#onMouseUpBound);
     }
 
