@@ -1,4 +1,5 @@
 import * as THREE from './three/three.module.js';
+import CommandTypes from './CommandTypes.js';
 
 export default class SceneSynchronizer {
     #sceneDescriptor;
@@ -29,7 +30,9 @@ export default class SceneSynchronizer {
         this.#sceneInterface.setMatrix(name, matrix);
 
         if( emit ) {
-            this.emitMessage({type: "matrix", name: name, matrix: matrix});
+            // this.emitMessage({type: "matrix", name: name, matrix: matrix});
+            this.emitMessage(CommandTypes.MATRIX, {name: name, matrix: matrix});
+            console.log(matrix)
         }
     }
 
@@ -47,7 +50,8 @@ export default class SceneSynchronizer {
         if( accepted ) {
             this.#sceneInterface.showBoxHelper(name);
             if( emit ) {
-                this.emitMessage({type: "select", name: name})
+                this.emitMessage(CommandTypes.SELECT, {name: name});
+                // this.emitMessage({type: "select", name: name})
             }
         }
 
@@ -59,7 +63,7 @@ export default class SceneSynchronizer {
         this.#sceneInterface.hideBoxHelper(name);
 
         if( emit ) {
-            this.emitMessage({type: "deselect", name: name})
+            this.emitMessage(CommandTypes.DESELECT, {name: name})
         }
     }
 
@@ -85,8 +89,8 @@ export default class SceneSynchronizer {
         }
     }
 
-    emitMessage ( data ) {
+    emitMessage ( type, data = {} ) {
         // console.log(data);
-        // this.#messageHandler.emitMessage(data);
+        this.#messageHandler.emitMessage(type, data);
     }
 }

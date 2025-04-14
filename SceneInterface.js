@@ -157,8 +157,17 @@ export default class SceneInterface {
 
 	get pointer ( ) {
         this.#raycaster.setFromCamera(this.#lastPointerMouse, this.#camera);
+        const intersections = this.#raycaster.intersectObject(this.#scene.children[0], true);
+
         this.#pointer.p0.copy(this.#raycaster.ray.origin).addScaledVector(this.#raycaster.ray.direction, 1.5)
-        this.#pointer.p1.copy(this.#raycaster.ray.origin).addScaledVector(this.#raycaster.ray.direction, 4);
+
+        if(intersections[0]) {
+            this.#pointer.p1.copy(intersections[0].point);
+
+        } else {
+            const dist = - this.#raycaster.ray.origin.y / this.#raycaster.ray.direction.y;
+            this.#pointer.p1.copy(this.#raycaster.ray.origin).addScaledVector(this.#raycaster.ray.direction, dist);
+        }
     
 		return {p0: this.#pointer.p0.clone(), p1: this.#pointer.p1.clone()};
 	}
