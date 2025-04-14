@@ -44,6 +44,10 @@ export default class SceneController {
         });
     }
 
+	get gui ( ) {
+		return this.#gui;
+	}
+
     selectObject ( name ) {
         this.deselectObject(this.#guiParams.previouslySelected);
         

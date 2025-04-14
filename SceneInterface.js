@@ -11,6 +11,8 @@ export default class SceneInterface {
     #objectsMap = new Map();
     #boxMap = new Map();
 
+
+	/// Needs to move to scene controller 
 	#cameraNeedsUpdate = false;
 	#pointer = {
 		p0: new THREE.Vector3(),
@@ -25,7 +27,8 @@ export default class SceneInterface {
     #mouse = new THREE.Vector2();
 	#lastPointerMouse = new THREE.Vector2();
 	#raycaster = new THREE.Raycaster();
-    
+    ///
+
     constructor ( ) {
 		console.log("SceneInterface - constructor");
 
@@ -134,6 +137,8 @@ export default class SceneInterface {
     get renderer ( ) {
         return this.#renderer;
     }
+	
+	/// Needs to move to scene controller 
 
     get camera ( ) {
         return this.#camera;
@@ -155,10 +160,27 @@ export default class SceneInterface {
 		return needsUpdate;
 	}
 
+
 	get pointer ( ) {
         this.#raycaster.setFromCamera(this.#lastPointerMouse, this.#camera);
         const intersections = this.#raycaster.intersectObject(this.#scene.children[0], true);
 
+        this.#pointer.p0.copy(this.#raycaster.ray.origin).addScaledVector(this.#raycaster.ray.direction, 1.5)
+
+        if(intersections[0]) {
+            this.#pointer.p1.copy(intersections[0].point);
+
+        } else {
+            const dist = - this.#raycaster.ray.origin.y / this.#raycaster.ray.direction.y;
+            this.#pointer.p1.copy(this.#raycaster.ray.origin).addScaledVector(this.#raycaster.ray.direction, dist);
+        }
+    
+		return {p0: this.#pointer.p0.clone(), p1: this.#pointer.p1.clone()};
+	}
+
+	raycast ( camera ) {
+        this.#raycaster.setFromCamera(this.#lastPointerMouse, camera ?? this.#camera);
+        const intersections = this.#raycaster.intersectObject(this.#scene.children[0], true);
         this.#pointer.p0.copy(this.#raycaster.ray.origin).addScaledVector(this.#raycaster.ray.direction, 1.5)
 
         if(intersections[0]) {
@@ -180,7 +202,6 @@ export default class SceneInterface {
     } 
 
 	#onMouseDown ( event ) {
-		// console.log(event);
         this.#setMouse(event.clientX, event.clientY);
 
 		if( event.button == 1 ) {
@@ -205,8 +226,6 @@ export default class SceneInterface {
 		this.#lastPointerMouse.copy(this.#mouse);
         this.#renderer.domElement.removeEventListener("mouseup", this.#onMouseUpBound);
     }
+	/// Needs to move to scene controller 
 
-    // #onKeyDown ( event ) {
-        /// Place markers when pressing key
-    // }
 }
